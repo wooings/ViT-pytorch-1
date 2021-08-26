@@ -7,7 +7,9 @@ import copy
 import logging
 import math
 
-from os.path import join as pjoin
+from os.path import join
+from os.path import normpath
+import platform
 
 import torch
 import torch.nn as nn
@@ -40,6 +42,14 @@ def np2th(weights, conv=False):
     if conv:
         weights = weights.transpose([3, 2, 0, 1])
     return torch.from_numpy(weights)
+
+
+def pjoin(path, *paths):
+    p = join(path, *paths)
+    if platform.system() == "Windows":
+        return normpath(p).replace('\\','/')
+    else:
+        return p
 
 
 def swish(x):
@@ -190,7 +200,7 @@ class Block(nn.Module):
         return x, weights
 
     def load_from(self, weights, n_block):
-        ROOT = f"Transformer/encoderblock_{n_block}"
+        ROOT = f"Transformer\\encoderblock_{n_block}"
         with torch.no_grad():
             query_weight = np2th(weights[pjoin(ROOT, ATTENTION_Q, "kernel")]).view(self.hidden_size, self.hidden_size).t()
             key_weight = np2th(weights[pjoin(ROOT, ATTENTION_K, "kernel")]).view(self.hidden_size, self.hidden_size).t()
